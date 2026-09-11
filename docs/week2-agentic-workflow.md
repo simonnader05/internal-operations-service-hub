@@ -2,17 +2,17 @@
 
 ## Understand
 
-Week 2 was scoped from the Week 1 documents, not from a new product discussion.
+Week 2 was scoped from the Week 1 documents.
 
-Week 1 sources used:
+Sources used:
 
 - `docs/product-spec.md`
 - `docs/architecture.md`
 - `docs/data-model.md`
 
-Those files already define request tracking and a status list. The bounded behavior chosen for this week is **request status transitions** only.
+The bounded behavior selected was request status transitions.
 
-States:
+### Request States
 
 - Pending
 - In Progress
@@ -20,7 +20,7 @@ States:
 - Rejected
 - Closed
 
-Valid transitions:
+### Valid Transitions
 
 - Pending → In Progress
 - Pending → Rejected
@@ -28,72 +28,194 @@ Valid transitions:
 - In Progress → Rejected
 - Resolved → Closed
 
-Invariant: a Closed request cannot be modified.
-
-Implementation area: the existing NestJS `requests` module (`backend/src/requests/`), using in-memory data.
-
-Non-goals for this week: frontend, database, authentication, AI agent, notifications, and any extra HR or IT features.
-
-## Direct
-
-The existing docs and request-module files were inspected first. No code was changed during that step.
-
-A short implementation plan was written next: GET endpoints to view requests, PATCH to change status, HTTP 400 for invalid transitions, HTTP 404 when a request does not exist.
-
-That plan was reviewed and approved before any implementation. After approval, only the agreed status-transition behavior was added.
-
-## Prove
-
-Checks use the in-memory seed data:
-
-| ID | Starting status |
-| --- | --- |
-| `1` | Pending |
-| `2` | In Progress |
-| `4` | Rejected |
-| `5` | Closed |
-| `999` | does not exist |
-
-These HTTP checks were not executed in this write-up. Fill in **Actual** after running them against a running backend.
-
-### Valid transitions
-
-**Pending → In Progress**
-
-- Request: `PATCH /requests/1/status` with `{ "status": "In Progress" }`
-- Expected: HTTP 200; request `1` status is `In Progress`
-- Actual: _not run_
-
-**In Progress → Resolved**
-
-- Request: `PATCH /requests/2/status` with `{ "status": "Resolved" }`
-- Expected: HTTP 200; request `2` status is `Resolved`
-- Actual: _not run_
-
-### Invalid transitions
-
-**Pending → Closed**
-
-- Request: `PATCH /requests/1/status` with `{ "status": "Closed" }` (while request `1` is still Pending)
-- Expected: HTTP 400; status stays `Pending`
-- Actual: _not run_
-
-**Rejected → Resolved**
-
-- Request: `PATCH /requests/4/status` with `{ "status": "Resolved" }`
-- Expected: HTTP 400; status stays `Rejected`
-- Actual: _not run_
-
-### Missing request
-
-- Request: `GET /requests/999` or `PATCH /requests/999/status`
-- Expected: HTTP 404
-- Actual: _not run_
-
-### Invariant verification
+### Invariant
 
 A Closed request cannot be modified.
 
-- Request: `PATCH /requests/5/status` with `{ "status": "In Progress" }`
-- Expected: HTTP 400 with a closed-request error; `GET /requests/5` still returns `Closed`
-- Actual: _not run_
+The implementation is located in:
+
+`backend/src/requests/`
+
+The backend was first implemented with in-memory data and was later changed to use SQLite persistence.
+
+## Direct
+
+The existing Week 1 documentation and NestJS request module were inspected before implementation.
+
+A bounded plan was created before code changes.
+
+The implementation added:
+
+- `GET /requests`
+- `GET /requests/:id`
+- `PATCH /requests/:id/status`
+- validation of request status transitions
+- HTTP 400 for invalid transitions
+- HTTP 404 for missing requests
+
+The plan was reviewed before implementation.
+
+Later, SQLite was introduced to persist request state instead of keeping it only in memory.
+
+The status update endpoint was also protected with a role-based guard.
+
+## Prove
+
+
+
+### Valid Transition
+
+A valid request status transition was tested.
+
+Example:
+
+`Pending → In Progress`
+
+Expected:
+
+- request accepted
+- HTTP 200
+- status saved
+
+Actual:
+
+- request accepted
+- status changed successfully
+- status was stored in SQLite
+
+
+
+### Persistence Verification
+
+The backend was stopped and restarted after changing a request status.
+
+Expected:
+
+The updated status should remain after restarting the application.
+
+Actual:
+
+The updated status remained after restart.
+
+SQLite persistence was successfully verified.
+
+### Invalid Transition
+
+An invalid status transition was tested.
+
+Expected:
+
+- HTTP 400
+- request status should not change
+
+Actual:
+
+- HTTP 400 returned
+- stored status remained unchanged
+
+
+
+### Closed Request Invariant
+
+A Closed request was used to test:
+
+`Closed → In Progress`
+
+Expected:
+
+- HTTP 400
+- Closed request must not change
+
+Actual:
+
+- request was rejected
+- status remained Closed
+
+
+
+## Boundary Protection Verification
+
+The `PATCH /requests/:id/status` endpoint was protected with a role-based guard.
+
+The caller provides a role using the `x-user-role` request header.
+
+### Allowed Actor
+
+An HR actor performed an allowed request status update.
+
+Expected:
+
+- request allowed
+- status validation executed
+- valid change saved
+
+Actual:
+
+- request succeeded
+
+
+
+### Denied Actor
+
+An Employee actor attempted to change a request status.
+
+Expected:
+
+`403 Forbidden`
+
+Actual:
+
+`403 Forbidden`
+
+The stored request status did not change.
+
+### Missing Actor
+
+A request was sent without the `x-user-role` header.
+
+Expected:
+
+`403 Forbidden`
+
+Actual:
+
+`403 Forbidden`
+
+### Unknown Actor
+
+A request was sent with an unknown role.
+
+Expected:
+
+`403 Forbidden`
+
+Actual:
+
+`403 Forbidden`
+
+### Authorized Actor With Invalid Transition
+
+An authorized actor attempted an invalid status transition.
+
+Expected:
+
+`400 Bad Request`
+
+Actual:
+
+`400 Bad Request`
+
+The stored request status did not change.
+
+## Result
+
+The implementation now proves that:
+
+- valid request transitions succeed
+- invalid request transitions are rejected
+- Closed requests cannot be modified
+- request state is persisted using SQLite
+- authorized actors can update request status
+- unauthorized, missing, and unknown actors are rejected
+- failed requests do not modify persistent state
+
