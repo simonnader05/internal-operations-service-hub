@@ -3,30 +3,30 @@ import { RequestStatus } from './request-status.enum';
 
 @Entity('requests')
 export class Request {
-  @PrimaryColumn()
+  @PrimaryColumn({ type: 'text' })
   id: string;
 
-  @Column()
+  @Column({ type: 'text' })
   number: string;
 
-  @Column()
+  @Column({ type: 'text' })
   title: string;
 
-  @Column()
+  @Column({ type: 'text' })
   serviceArea: string;
 
-  @Column()
+  @Column({ type: 'text' })
   status: RequestStatus;
 
-  @Column()
+  @Column({ type: 'text' })
   createdAt: string;
 
-  @Column()
+  @Column({ type: 'text' })
   updatedAt: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   resolvedAt?: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   closedAt?: string;
 }
