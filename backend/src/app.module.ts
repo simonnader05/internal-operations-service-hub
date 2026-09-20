@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { RequestsModule } from './requests/requests.module';
-import { Request } from './requests/request.entity';
 
+import { RequestIntakeModule } from './request-intake/request-intake.module';
+import { Request } from './requests/request.entity';
+import { RequestsModule } from './requests/requests.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -12,6 +13,7 @@ import { Request } from './requests/request.entity';
       synchronize: true,
     }),
     RequestsModule,
+    RequestIntakeModule,
   ],
 })
 export class AppModule {}
