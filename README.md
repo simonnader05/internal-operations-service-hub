@@ -1,16 +1,15 @@
 # Internal Operations Service Hub
 
-The Internal Operations Service Hub is a small full-stack service request workflow built with:
+A full-stack internal operations application built for the AI Academy 2026.
 
-- React
+The project demonstrates a complete workflow using:
 
-- NestJS
-
+- React frontend
+- NestJS backend
+- TypeORM
 - SQLite
-
-- Vitest
-
-The implemented slice allows users to view service requests and attempt request status changes through a protected API.
+- Automated testing with Vitest
+- AI-assisted request intake using OpenRouter
 
 ## Project Structure
 
@@ -18,12 +17,15 @@ The implemented slice allows users to view service requests and attempt request 
 
 internal-operations-service-hub/
 
-├── frontend/
-
 ├── backend/
 
-├── docs/
+├── frontend/
 
 ├── decisions/
 
+├── docs/
+
 └── [README.md](http://README.md)
+
+```
+
