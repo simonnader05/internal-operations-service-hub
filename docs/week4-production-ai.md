@@ -460,8 +460,7 @@ Then, from another PowerShell window:
 
 ```powershell
 
-Invoke-RestMethod -Uri "[http://localhost:3000/request-intake/suggest](http://localhost:3000/request-intake/suggest)" -Method POST -ContentType "application/json" -Body '{"requestText":"My laptop keeps crashing and I cannot work"}'
-
+Invoke-RestMethod -Uri "http://localhost:3000/request-intake/suggest" -Method POST -ContentType "application/json" -Body '{"requestText":"My laptop keeps crashing and I cannot work"}'
 ```
 
 A successful response returns a validated structured suggestion from the real AI provider.
