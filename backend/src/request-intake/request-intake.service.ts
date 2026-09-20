@@ -7,6 +7,7 @@ import {
 import { AiProvider } from './ai-provider';
 import { IntakeSuggestion } from './request-intake.types';
 import { LocalAiProvider } from './local-ai.provider';
+import { OpenRouterAiProvider } from './openrouter-ai.provider';
 
 @Injectable()
 export class RequestIntakeService {
@@ -29,7 +30,21 @@ export class RequestIntakeService {
   private readonly aiProvider: AiProvider;
 
   constructor() {
-    this.aiProvider = new LocalAiProvider();
+    /*
+     * Normal tests and local development remain deterministic.
+     *
+     * To use the real OpenRouter AI provider:
+     * AI_PROVIDER=openrouter
+     * OPENROUTER_API_KEY=<your key>
+     */
+    if (
+      process.env.AI_PROVIDER === 'openrouter' &&
+      process.env.OPENROUTER_API_KEY
+    ) {
+      this.aiProvider = new OpenRouterAiProvider();
+    } else {
+      this.aiProvider = new LocalAiProvider();
+    }
   }
 
   async suggest(requestText: string): Promise<IntakeSuggestion> {
@@ -48,6 +63,8 @@ export class RequestIntakeService {
         title: candidate.title.trim(),
       };
     } catch (error) {
+      console.error('Request intake provider error:', error);
+
       if (error instanceof BadRequestException) {
         throw error;
       }
